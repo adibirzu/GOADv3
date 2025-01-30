@@ -1,7 +1,8 @@
 import json
 import shutil
+from os.path import sep
 from jinja2 import Template, Environment, FileSystemLoader
-from goad.goadpath import *
+from goad.goadpath import GoadPath
 from goad.log import Log
 from goad.exceptions import ProviderPathNotFound, JumpBoxInitFailed
 from goad.provisioner.provisioner_factory import ProvisionerFactory
@@ -54,6 +55,8 @@ class LabInstance:
 
         if self.provider_name == AZURE:
             self.provider.set_resource_group(self.lab_name + '-' + self.instance_id)
+        if self.provider_name == OCI:
+            self.provider.set_compartment_ocid(self.lab_name + '-' + self.instance_id)
         if self.provider_name == AWS:
             self.provider.set_tag(self.lab_name + '-' + self.instance_id)
         if self.provider_name == LUDUS:
@@ -77,7 +80,7 @@ class LabInstance:
         return True
 
     def is_terraform(self):
-        return self.provider_name == AWS or self.provider_name == AZURE or self.provider_name == PROXMOX
+        return self.provider_name == AWS or self.provider_name == AZURE or self.provider_name == PROXMOX or self.provider_name == OCI
 
     def is_vagrant(self):
         return self.provider_name == VMWARE or self.provider_name == VMWARE_ESXI or self.provider_name == VIRTUALBOX
@@ -280,6 +283,28 @@ class LabInstance:
         ssh_folder = self.instance_path + sep + 'ssh_keys'
         if not os.path.isdir(ssh_folder):
             os.mkdir(ssh_folder, 0o750)
+            
+        # Copy SSH keys from template for OCI
+        if self.provider_name == 'oci':
+            template_ssh_folder = os.path.join(GoadPath.get_template_path('oci'), 'ssh_keys')
+            provider_ssh_folder = os.path.join(self.instance_provider_path, 'ssh_keys')
+            if not os.path.isdir(provider_ssh_folder):
+                os.mkdir(provider_ssh_folder, 0o750)
+            try:
+                shutil.copy2(
+                    os.path.join(template_ssh_folder, 'ubuntu-jumpbox.pem'),
+                    os.path.join(provider_ssh_folder, 'ubuntu-jumpbox.pem')
+                )
+                shutil.copy2(
+                    os.path.join(template_ssh_folder, 'ubuntu-jumpbox.pub'),
+                    os.path.join(provider_ssh_folder, 'ubuntu-jumpbox.pub')
+                )
+                # Set correct permissions
+                os.chmod(os.path.join(provider_ssh_folder, 'ubuntu-jumpbox.pem'), 0o600)
+                os.chmod(os.path.join(provider_ssh_folder, 'ubuntu-jumpbox.pub'), 0o644)
+            except Exception as e:
+                Log.error(f'Error copying SSH keys: {str(e)}')
+                raise ProviderPathNotFound(f'Failed to copy SSH keys: {str(e)}')
         Log.info('Create instance providing files')
         if self.is_vagrant():
             self._create_vagrantfile()

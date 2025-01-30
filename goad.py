@@ -7,6 +7,7 @@ from goad.log import Log
 from goad.exceptions import JumpBoxInitFailed
 from goad.menu import print_menu, print_logo
 from goad.infos import *
+from goad.goadpath import GoadPath
 
 
 class Goad(cmd.Cmd):

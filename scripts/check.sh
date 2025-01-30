@@ -7,7 +7,7 @@ ERROR=$(tput setaf 1; echo -n "  [!]"; tput sgr0)
 GOODTOGO=$(tput setaf 2; echo -n "  [✓]"; tput sgr0)
 INFO=$(tput setaf 3; echo -n "  [-]"; tput sgr0)
 
-PROVIDERS="virtualbox vmware azure proxmox vmware_esxi"
+PROVIDERS="virtualbox vmware azure proxmox vmware_esxi oci"
 ANSIBLE_HOSTS="docker local"
 print_usage() {
   echo "Usage: ./check.sh <provider> <ansible_host>"
@@ -116,6 +116,17 @@ check_azure_installed() {
   else
     (echo >&2 "${GOODTOGO} azure is installed")
   fi
+}
+
+check_oci_installed() {
+  if ! which oci >/dev/null; then
+    (echo >&2 "${ERROR} oci was not found in your PATH.")
+    (echo >&2 "${ERROR} Please correct this before continuing. Exiting.")
+    (echo >&2 "${ERROR} Correct this by installing the OCI CLI (https://docs.oracle.com/en-us/iaas/Content/API/SDKDocs/cliinstall.htm)")
+    exit 1
+  else
+    (echo >&2 "${GOODTOGO} OCI CLI is installed")  
+    fi
 }
 
 check_rsync_path() {

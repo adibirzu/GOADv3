@@ -16,3 +16,5 @@ boto3
 # Proxmox
 proxmoxer
 requests
+# OCI
+oci

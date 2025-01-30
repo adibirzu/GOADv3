@@ -27,7 +27,7 @@ class Config:
         config.set('default', '; lab: GOAD / GOAD-Light / MINILAB / NHA / SCCM')
         config.set('default', 'lab', 'GOAD')
 
-        config.set('default', '; provider : virtualbox / vmware / vmware_esxi / aws / azure / proxmox')
+        config.set('default', '; provider : virtualbox / vmware / vmware_esxi / aws / azure / proxmox / oci')
         config.set('default', 'provider', 'vmware')
 
         config.set('default', "; provisioner method : local / remote")
@@ -42,6 +42,9 @@ class Config:
 
         config.add_section('azure')
         config.set('azure', 'az_location', 'westeurope')
+
+        config.add_section('oci')
+        config.set('oci', 'ad_location', 'eu-frankfurt-1')
 
         config.add_section('proxmox')
         config.set('proxmox', 'pm_api_url', 'https://192.168.1.1:8006/api2/json')
