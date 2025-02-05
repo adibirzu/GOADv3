@@ -37,7 +37,7 @@ variable "fingerprint" {
 variable "private_key_path" {
   description = "The path to the private key."
   type        = string
-  default = "/Users/abirzu/.oci/priv.pem"
+  default = "~/.oci/priv.pem"
 }
 
 variable "region" {

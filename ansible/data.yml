@@ -13,15 +13,19 @@
 
     - name: find domain_adapter
       set_fact:
-       domain_adapter="{{item.connection_name}}"
-      when: item.ipv4.address == hostvars[dict_key].ansible_host
+        domain_adapter: "{{item.connection_name}}"
+      when: >
+        (item.ipv4[0].address is defined and item.ipv4[0].address == hostvars[dict_key].ansible_host) or
+        (item.ipv4.address is defined and item.ipv4.address == hostvars[dict_key].ansible_host)
       with_items: "{{ ansible_interfaces }}"
       run_once: true
 
     - name: find nat_adapter
       set_fact:
-       nat_adapter="{{item.connection_name}}"
-      when: item.ipv4.address != hostvars[dict_key].ansible_host
+        nat_adapter: "{{item.connection_name}}"
+      when: >
+        (item.ipv4[0].address is defined and item.ipv4[0].address != hostvars[dict_key].ansible_host) or
+        (item.ipv4.address is defined and item.ipv4.address != hostvars[dict_key].ansible_host)
       with_items: "{{ ansible_interfaces }}"
       run_once: true
 

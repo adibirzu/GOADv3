@@ -6,30 +6,32 @@
       - "{{dns_server}}"
   when: force_dns_server == "yes"
 
-- name: Set a proxy for specific protocols
-  community.windows.win_http_proxy:
-    proxy:
-      http: "{{ad_http_proxy}}"
-      https: "{{ad_https_proxy}}"
+- name: Configure system and IE proxy settings
+  win_shell: |
+    # Set system proxy
+    $proxyServer = "{{ad_http_proxy}}"
+    $httpsProxy = "{{ad_https_proxy}}"
+    
+    # Configure WinHTTP proxy
+    netsh winhttp set proxy proxy-server="http=$proxyServer;https=$httpsProxy" bypass-list="<local>"
+    
+    # Configure Internet Explorer proxy
+    $regKey = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Internet Settings"
+    Set-ItemProperty -Path $regKey -Name ProxyServer -Value "http=$proxyServer;https=$httpsProxy"
+    Set-ItemProperty -Path $regKey -Name ProxyEnable -Value 1
   when: http_proxy == "yes"
 
-- name: Configure IE to use a specific proxy per protocol
-  community.windows.win_inet_proxy:
-    proxy:
-      http: "{{ad_http_proxy}}"
-      https: "{{ad_https_proxy}}"
-  when: http_proxy == "yes"
-
-- name: Upgrade module PowerShellGet to fix accept license issue on last windows ansible version
+- name: Install and configure PowerShell modules
   win_shell: |
     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+    
+    # Install NuGet and PowerShellGet
     Install-PackageProvider -Name NuGet -Force
-    Install-Module PowerShellGet -Force
-
-- name: Windows | Check for ComputerManagementDsc Powershell module
-  win_psmodule:
-    name: ComputerManagementDsc
-    state: present
+    Install-Module PowerShellGet -Force -AllowClobber
+    
+    # Install required DSC modules
+    Install-Module ComputerManagementDsc -Force
+    Install-Module xNetworking -Force
 
 - name: Windows | Enable Remote Desktop
   win_dsc:
@@ -37,11 +39,6 @@
     IsSingleInstance : 'yes'
     Ensure: present
     UserAuthentication: Secure
-
-- name: Windows | Check for xNetworking Powershell module
-  win_psmodule:
-    name: xNetworking
-    state: present
 
 - name: Firewall | Allow RDP through Firewall
   win_dsc:
@@ -55,10 +52,8 @@
     Protocol: "TCP"
     Description: "Opens the listener port for RDP"
 
-- name: Add a network static route
-  community.windows.win_route:
-    destination: "{{route_network}}"
-    gateway: "{{route_gateway}}"
-    metric: 1
-    state: present
+- name: Add network static route
+  win_shell: |
+    # Add static route using route add command
+    route -p add {{route_network}} mask 255.255.255.0 {{route_gateway}} metric 1
   when: add_route == "yes"
