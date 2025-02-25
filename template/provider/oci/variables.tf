@@ -19,25 +19,25 @@ variable "service_gateway_display_name" {
 variable "tenancy_ocid" {
   description = "The OCID of your tenancy."
   type        = string
-  default = "ocid1.tenancy.oc1..aaaaaaaaxzpxbcag7zgamh2erlggqro3y63tvm2rbkkjz4z2zskvagupiz7a"
+  default = "ocid1.tenancy.oc1..aaaaaaaaxzpxbcag7zgupiz7a"
 }
 
 variable "user_ocid" {
   description = "The OCID of the user calling the API."
   type        = string
-  default = "ocid1.user.oc1..aaaaaaaawlmnpsv76fbqs6bjdt4bmx5hpwnve3j77u6bwfk36ltdoaspbgpq"
+  default = "ocid1.user.oc1..aaaaaaaawlmnpsv76aspbgpq"
 }
 
 variable "fingerprint" {
   description = "The fingerprint of the API key."
   type        = string
-  default = "b2:37:84:02:01:89:43:91:59:0f:bb:83:34:c0:b0:c6"
+  default = "b2b0:c6"
 }
 
 variable "private_key_path" {
   description = "The path to the private key."
   type        = string
-  default = "~/.oci/priv.pem"
+  default = "/Users/abirzu/.oci/priv.pem"
 }
 
 variable "region" {
@@ -49,7 +49,7 @@ variable "region" {
 variable "compartment_ocid" {
   description = "The OCID of the compartment to use."
   type        = string
-  default = "ocid1.compartment.oc1..aaaaaaaas3kvx6eqh4pdgrnarzec4zhxw7bzjlhgp5pyxbv36au5krrtg34a"
+  default = "ocid1.compartment.oc1..aaaaaaaaau5krrtg34a"
 }
 
 variable "availability_domain" {
