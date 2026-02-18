@@ -1,0 +1,423 @@
+# =============================================================================
+# OCI Resource Manager Stack Schema — Console UI definition for GOADv3
+# =============================================================================
+title: "GOADv3 - Game of Active Directory Lab"
+description: |
+  Deploys the full GOAD (Game of Active Directory) lab environment on OCI.
+  Creates 5 Windows AD domain controllers/servers, Linux monitoring hosts
+  (Arkime, Zeek), and a jumpbox that automatically provisions everything
+  via Ansible. Optional ELK, Wazuh, and Workstation extensions.
+schemaVersion: 1.1.0
+version: "1.0.0"
+locale: "en"
+
+variableGroups:
+  - title: "General Configuration"
+    variables:
+      - compartment_ocid
+      - region
+      - availability_domain
+      - ssh_authorized_keys
+      - windows_password
+
+  - title: "Network Configuration"
+    variables:
+      - vcn_cidr
+      - public_subnet_cidr
+      - private_subnet_cidr
+      - create_service_gateway
+
+  - title: "Windows Compute"
+    variables:
+      - windows_shape
+      - windows_ocpus
+      - windows_memory_in_gbs
+      - windows_boot_volume_size_in_gbs
+      - windows2019_image_ocid
+      - windows2016_image_ocid
+
+  - title: "Linux Compute"
+    variables:
+      - linux_shape
+      - linux_ocpus
+      - linux_memory_in_gbs
+      - linux_boot_volume_size_in_gbs
+      - ubuntu_image_ocid
+
+  - title: "Jumpbox Configuration"
+    variables:
+      - jumpbox_ocpus
+      - jumpbox_memory_in_gbs
+      - goad_repo_url
+      - goad_repo_branch
+
+  - title: "Extensions"
+    variables:
+      - enable_elk
+      - elk_private_ip
+      - elk_ocpus
+      - elk_memory_in_gbs
+      - enable_wazuh
+      - wazuh_private_ip
+      - wazuh_ocpus
+      - wazuh_memory_in_gbs
+      - enable_workstation
+      - workstation_private_ip
+
+  - title: "Management Agent"
+    variables:
+      - enable_management_agent
+      - management_agent_install_key
+
+  - title: "Tags"
+    variables:
+      - freeform_tags
+      - defined_tags
+
+variables:
+  # --- General ---
+  tenancy_ocid:
+    type: string
+    title: "Tenancy OCID"
+    required: true
+    visible: false
+
+  compartment_ocid:
+    type: oci:identity:compartment:id
+    title: "Compartment"
+    description: "The compartment where all resources will be created."
+    required: true
+
+  region:
+    type: oci:identity:region:name
+    title: "Region"
+    description: "The OCI region for deployment."
+    required: true
+
+  availability_domain:
+    type: oci:identity:availabilitydomain:name
+    title: "Availability Domain"
+    description: "The availability domain for all instances."
+    required: true
+    dependsOn:
+      compartmentId: compartment_ocid
+
+  ssh_authorized_keys:
+    type: oci:core:ssh:publickey
+    title: "SSH Public Key"
+    description: "Your SSH public key for jumpbox access."
+    required: true
+
+  windows_password:
+    type: password
+    title: "Windows Password"
+    description: "Password for the 'ansible' user on all Windows instances. Must meet Windows complexity requirements (12+ chars, mixed case, numbers, symbols)."
+    required: true
+    minLength: 12
+    pattern: "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[!@#$%^&*()_+\\-=]).{12,}$"
+
+  # --- Network ---
+  vcn_cidr:
+    type: string
+    title: "VCN CIDR Block"
+    default: "192.168.0.0/16"
+    pattern: "^([0-9]{1,3}\\.){3}[0-9]{1,3}/[0-9]{1,2}$"
+
+  public_subnet_cidr:
+    type: string
+    title: "Public Subnet CIDR"
+    default: "192.168.57.0/24"
+    pattern: "^([0-9]{1,3}\\.){3}[0-9]{1,3}/[0-9]{1,2}$"
+
+  private_subnet_cidr:
+    type: string
+    title: "Private Subnet CIDR"
+    default: "192.168.56.0/24"
+    pattern: "^([0-9]{1,3}\\.){3}[0-9]{1,3}/[0-9]{1,2}$"
+
+  create_service_gateway:
+    type: boolean
+    title: "Create Service Gateway"
+    description: "Enable OCI Service Gateway for private access to OCI services."
+    default: true
+
+  # --- Windows Compute ---
+  windows_shape:
+    type: oci:core:instanceshape:name
+    title: "Windows Instance Shape"
+    default: "VM.Standard.E5.Flex"
+    dependsOn:
+      compartmentId: compartment_ocid
+
+  windows_ocpus:
+    type: integer
+    title: "Windows OCPUs"
+    description: "Number of OCPUs per Windows instance."
+    default: 2
+    minimum: 1
+    maximum: 64
+
+  windows_memory_in_gbs:
+    type: integer
+    title: "Windows Memory (GB)"
+    description: "Memory in GBs per Windows instance."
+    default: 32
+    minimum: 8
+    maximum: 1024
+
+  windows_boot_volume_size_in_gbs:
+    type: integer
+    title: "Windows Boot Volume (GB)"
+    default: 256
+    minimum: 50
+    maximum: 2048
+
+  windows2019_image_ocid:
+    type: string
+    title: "Windows 2019 Image OCID (Override)"
+    description: "Leave empty for auto-lookup of the latest Windows Server 2019 Standard image."
+    default: ""
+
+  windows2016_image_ocid:
+    type: string
+    title: "Windows 2016 Image OCID (Override)"
+    description: "Leave empty for auto-lookup of the latest Windows Server 2016 Standard image."
+    default: ""
+
+  # --- Linux Compute ---
+  linux_shape:
+    type: oci:core:instanceshape:name
+    title: "Linux Instance Shape"
+    default: "VM.Standard.E5.Flex"
+    dependsOn:
+      compartmentId: compartment_ocid
+
+  linux_ocpus:
+    type: integer
+    title: "Linux OCPUs"
+    default: 1
+    minimum: 1
+    maximum: 64
+
+  linux_memory_in_gbs:
+    type: integer
+    title: "Linux Memory (GB)"
+    default: 12
+    minimum: 4
+    maximum: 1024
+
+  linux_boot_volume_size_in_gbs:
+    type: integer
+    title: "Linux Boot Volume (GB)"
+    default: 50
+    minimum: 50
+    maximum: 2048
+
+  ubuntu_image_ocid:
+    type: string
+    title: "Ubuntu 22.04 Image OCID (Override)"
+    description: "Leave empty for auto-lookup of the latest Ubuntu 22.04 image."
+    default: ""
+
+  # --- Jumpbox ---
+  jumpbox_ocpus:
+    type: integer
+    title: "Jumpbox OCPUs"
+    description: "The jumpbox runs Ansible — more OCPUs speeds up provisioning."
+    default: 2
+    minimum: 1
+    maximum: 16
+
+  jumpbox_memory_in_gbs:
+    type: integer
+    title: "Jumpbox Memory (GB)"
+    default: 16
+    minimum: 8
+    maximum: 128
+
+  goad_repo_url:
+    type: string
+    title: "GOAD Git Repository URL"
+    default: "https://github.com/adibirzu/GOADv3.git"
+
+  goad_repo_branch:
+    type: string
+    title: "Git Branch"
+    default: "main"
+
+  # --- Extensions ---
+  enable_elk:
+    type: boolean
+    title: "Deploy ELK Stack"
+    description: "Create an ELK (Elasticsearch, Logstash, Kibana) instance."
+    default: false
+
+  elk_private_ip:
+    type: string
+    title: "ELK Private IP"
+    default: "192.168.56.50"
+    visible:
+      eq:
+        - enable_elk
+        - true
+
+  elk_ocpus:
+    type: integer
+    title: "ELK OCPUs"
+    default: 2
+    minimum: 1
+    maximum: 16
+    visible:
+      eq:
+        - enable_elk
+        - true
+
+  elk_memory_in_gbs:
+    type: integer
+    title: "ELK Memory (GB)"
+    default: 16
+    minimum: 8
+    maximum: 128
+    visible:
+      eq:
+        - enable_elk
+        - true
+
+  enable_wazuh:
+    type: boolean
+    title: "Deploy Wazuh"
+    description: "Create a Wazuh SIEM/XDR instance."
+    default: false
+
+  wazuh_private_ip:
+    type: string
+    title: "Wazuh Private IP"
+    default: "192.168.56.51"
+    visible:
+      eq:
+        - enable_wazuh
+        - true
+
+  wazuh_ocpus:
+    type: integer
+    title: "Wazuh OCPUs"
+    default: 2
+    minimum: 1
+    maximum: 16
+    visible:
+      eq:
+        - enable_wazuh
+        - true
+
+  wazuh_memory_in_gbs:
+    type: integer
+    title: "Wazuh Memory (GB)"
+    default: 16
+    minimum: 8
+    maximum: 128
+    visible:
+      eq:
+        - enable_wazuh
+        - true
+
+  enable_workstation:
+    type: boolean
+    title: "Deploy Windows Workstation"
+    description: "Create a Windows 2019 workstation for RDP access to the lab."
+    default: false
+
+  workstation_private_ip:
+    type: string
+    title: "Workstation Private IP"
+    default: "192.168.56.31"
+    visible:
+      eq:
+        - enable_workstation
+        - true
+
+  # --- Management Agent ---
+  enable_management_agent:
+    type: boolean
+    title: "Install OCI Management Agent"
+    description: "Run the Management Agent install playbook after AD provisioning."
+    default: false
+
+  management_agent_install_key:
+    type: password
+    title: "Management Agent Install Key"
+    description: "OCI Management Agent install key."
+    visible:
+      eq:
+        - enable_management_agent
+        - true
+
+  # --- Tags ---
+  freeform_tags:
+    type: string
+    title: "Freeform Tags (JSON)"
+    description: 'JSON map of freeform tags, e.g. {"Project": "GOADv3"}'
+    default: '{"Project": "GOADv3"}'
+
+  defined_tags:
+    type: string
+    title: "Defined Tags (JSON)"
+    description: "JSON map of defined tags."
+    default: "{}"
+
+outputGroups:
+  - title: "Connection Details"
+    outputs:
+      - jumpbox_public_ip
+      - jumpbox_ssh_command
+      - provision_log_command
+
+  - title: "Windows Instances"
+    outputs:
+      - windows_instances
+
+  - title: "Extensions"
+    outputs:
+      - elk_private_ip
+      - wazuh_private_ip
+      - workstation_private_ip
+
+outputs:
+  jumpbox_public_ip:
+    type: string
+    title: "Jumpbox Public IP"
+
+  jumpbox_ssh_command:
+    type: string
+    title: "SSH Command"
+
+  provision_log_command:
+    type: string
+    title: "Provision Log Command"
+
+  windows_instances:
+    type: string
+    title: "Windows Instance IPs"
+
+  elk_private_ip:
+    type: string
+    title: "ELK Private IP"
+    visible:
+      eq:
+        - enable_elk
+        - true
+
+  wazuh_private_ip:
+    type: string
+    title: "Wazuh Private IP"
+    visible:
+      eq:
+        - enable_wazuh
+        - true
+
+  workstation_private_ip:
+    type: string
+    title: "Workstation Private IP"
+    visible:
+      eq:
+        - enable_workstation
+        - true

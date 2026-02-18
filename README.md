@@ -56,6 +56,21 @@ For already-provisioned projects where you want direct inventory mode:
   --install-key-id "<ocid1.managementagentinstallkey...>"
 ```
 
+## Deploy GOAD on OCI (One-Click)
+
+Deploy the full GOADv3 lab directly from the OCI Console using Resource Manager — no CLI, no local tooling required. All 5 Windows AD hosts, Linux monitoring instances, and the Ansible jumpbox are provisioned automatically.
+
+[![Deploy to Oracle Cloud](https://oci-resourcemanager-plugin.plugins.oci.oraclecloud.com/latest/deploy-to-oracle-cloud.svg)](https://cloud.oracle.com/resourcemanager/stacks/create?zipUrl=https://github.com/adibirzu/GOADv3/archive/refs/heads/main.zip&zipUrlVariables={"working_directory":"ad/GOAD/providers/oci-stack"})
+
+**What happens when you click:**
+1. OCI Console opens the "Create Stack" wizard with the GOADv3 source pre-loaded
+2. Fill in the form (compartment, SSH key, Windows password, optional extensions)
+3. Click **Apply** — the jumpbox auto-provisions the entire AD lab via Ansible
+4. SSH to the jumpbox and `tail -f /var/log/goad-provision.log` to watch progress
+
+> [!NOTE]
+> The stack creates ~8 compute instances (5 Windows + 2 Linux + 1 jumpbox). Ensure your tenancy has sufficient service limits for the chosen shapes. Default config uses `VM.Standard.E5.Flex` with 2 OCPUs/32GB per Windows host and 1 OCPU/12GB per Linux host.
+
 ## Available labs
 
 - GOAD Lab family and extensions overview
