@@ -1,0 +1,30 @@
+---
+# Override these values in:
+#   workspace/oci_management_agent_vars.yml
+# or inventory vars (e.g. globalsettings.ini [all:vars]).
+#
+# Example override file:
+# oci_mgmt_agent_windows_zip_url: "https://objectstorage.../oracle.mgmt_agent.<ver>.Windows-x86_64.zip"
+# oci_mgmt_agent_linux_zip_url: "https://objectstorage.../oracle.mgmt_agent.<ver>.Linux-x86_64.zip"
+# oci_mgmt_agent_install_key_value: "<ManagementAgentInstallKey>"
+# oci_mgmt_agent_wallet_password: "Abcdef1!"
+# # Alternative fallback:
+# oci_mgmt_agent_windows_rsp_url: "https://objectstorage.../your-agent.rsp"
+# oci_mgmt_agent_linux_rsp_url: "https://objectstorage.../your-agent.rsp"
+
+oci_mgmt_agent_windows_zip_url: "https://objectstorage.eu-frankfurt-1.oraclecloud.com/p/YOURPARFILE/b/Images/o/oracle.mgmt_agent.<VERSION>.Windows-x86_64.zip"
+oci_mgmt_agent_windows_rsp_url: "https://objectstorage.eu-frankfurt-1.oraclecloud.com/p/YOURPARFILE/b/Images/o/ABSecOps.rsp"
+oci_mgmt_agent_windows_rsp_local_path: "C:\\Agents\\agent.rsp"
+
+oci_mgmt_agent_linux_zip_url: "https://objectstorage.eu-frankfurt-1.oraclecloud.com/p/YOURPARFILE/b/Images/o/oracle.mgmt_agent.<VERSION>.Linux-x86_64.zip"
+oci_mgmt_agent_linux_rsp_url: "https://objectstorage.eu-frankfurt-1.oraclecloud.com/p/YOURPARFILE/b/Images/o/ABSecOps.rsp"
+oci_mgmt_agent_linux_rsp_local_path: "/opt/oracle/mgmt_agent/agent.rsp"
+
+# Optional key-driven response generation (preferred for reuse):
+# - If oci_mgmt_agent_install_key_value is set, installers generate response files locally.
+# - oci_mgmt_agent_wallet_password is optional.
+oci_mgmt_agent_install_key_value: ""
+oci_mgmt_agent_wallet_password: ""
+
+oci_mgmt_agent_skip_windows: false
+oci_mgmt_agent_skip_linux: false

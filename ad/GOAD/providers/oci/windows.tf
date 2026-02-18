@@ -66,5 +66,28 @@ resource "oci_core_instance" "windows_instance" {
     admin_password = each.value.admin_password
   }
 
-
+  agent_config {
+    is_management_disabled = false
+    is_monitoring_disabled = false
+    plugins_config {
+      desired_state = "ENABLED"
+      name          = "Management Agent"
+    }
+    plugins_config {
+      desired_state = "ENABLED"
+      name          = "Custom Logs Monitoring"
+    }
+    plugins_config {
+      desired_state = "ENABLED"
+      name          = "Vulnerability Scanning"
+    }
+    plugins_config {
+      desired_state = "ENABLED"
+      name          = "Compute Instance Run Command"
+    }
+    plugins_config {
+      desired_state = "ENABLED"
+      name          = "Compute Instance Monitoring"
+    }
+  }
 }

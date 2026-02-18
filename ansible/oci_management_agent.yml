@@ -1,0 +1,124 @@
+---
+- name: Install OCI Management Agent on Windows hosts
+  hosts: all
+  gather_facts: false
+  vars_files:
+    - vars/oci_management_agent.defaults.yml
+  vars:
+    oci_mgmt_windows_installer_local: "../scripts/oci/installmanagementagent_windows.ps1"
+    oci_mgmt_windows_installer_remote: "C:\\Agents\\installmanagementagent.ps1"
+  pre_tasks:
+    - name: Load workspace overrides when present
+      ansible.builtin.include_vars:
+        file: ../workspace/oci_management_agent_vars.yml
+      failed_when: false
+
+    - name: Skip Windows deployment when disabled
+      ansible.builtin.meta: end_play
+      when: oci_mgmt_agent_skip_windows | bool
+
+  tasks:
+    - name: Skip non-Windows hosts
+      ansible.builtin.meta: end_host
+      when: (ansible_connection | default('')) != 'winrm'
+
+    - name: Validate Windows download variables
+      ansible.builtin.assert:
+        that:
+          - oci_mgmt_agent_windows_zip_url | length > 0
+          - "'YOURPARFILE' not in oci_mgmt_agent_windows_zip_url"
+          - "'<VERSION>' not in oci_mgmt_agent_windows_zip_url"
+          - >
+            (oci_mgmt_agent_install_key_value | length > 0) or
+            (
+              (oci_mgmt_agent_windows_rsp_url | length > 0) and
+              ('YOURPARFILE' not in oci_mgmt_agent_windows_rsp_url)
+            )
+        fail_msg: >-
+          Define either oci_mgmt_agent_install_key_value (preferred) or a valid
+          oci_mgmt_agent_windows_rsp_url in workspace/oci_management_agent_vars.yml
+          (or inventory vars) before running this playbook.
+
+    - name: Ensure Windows staging folder exists
+      ansible.windows.win_file:
+        path: C:\Agents
+        state: directory
+
+    - name: Copy Windows installer script
+      ansible.windows.win_copy:
+        src: "{{ oci_mgmt_windows_installer_local }}"
+        dest: "{{ oci_mgmt_windows_installer_remote }}"
+
+    - name: Install OCI Management Agent on Windows
+      ansible.windows.win_powershell:
+        script: |
+          & "{{ oci_mgmt_windows_installer_remote }}" `
+            -ManagementAgentZipUrl "{{ oci_mgmt_agent_windows_zip_url }}" `
+            -ResponseFileUrl "{{ oci_mgmt_agent_windows_rsp_url }}" `
+            -ManagementAgentInstallKey "{{ oci_mgmt_agent_install_key_value }}" `
+            -CredentialWalletPassword "{{ oci_mgmt_agent_wallet_password }}" `
+            -ResponseFileLocalPath "{{ oci_mgmt_agent_windows_rsp_local_path }}"
+
+- name: Install OCI Management Agent on Linux hosts
+  hosts: all
+  gather_facts: false
+  become: true
+  vars_files:
+    - vars/oci_management_agent.defaults.yml
+  vars:
+    oci_mgmt_linux_installer_local: "../scripts/oci/installmanagementagent_linux.sh"
+    oci_mgmt_linux_installer_remote: "/tmp/installmanagementagent_linux.sh"
+  pre_tasks:
+    - name: Load workspace overrides when present
+      ansible.builtin.include_vars:
+        file: ../workspace/oci_management_agent_vars.yml
+      failed_when: false
+
+    - name: Skip Linux deployment when disabled
+      ansible.builtin.meta: end_play
+      when: oci_mgmt_agent_skip_linux | bool
+
+  tasks:
+    - name: Skip non-Linux hosts
+      ansible.builtin.meta: end_host
+      when: (ansible_connection | default('')) == 'winrm'
+
+    - name: Validate Linux download variables
+      ansible.builtin.assert:
+        that:
+          - oci_mgmt_agent_linux_zip_url | length > 0
+          - "'YOURPARFILE' not in oci_mgmt_agent_linux_zip_url"
+          - "'<VERSION>' not in oci_mgmt_agent_linux_zip_url"
+          - >
+            (oci_mgmt_agent_install_key_value | length > 0) or
+            (
+              (oci_mgmt_agent_linux_rsp_url | length > 0) and
+              ('YOURPARFILE' not in oci_mgmt_agent_linux_rsp_url)
+            )
+        fail_msg: >-
+          Define either oci_mgmt_agent_install_key_value (preferred) or a valid
+          oci_mgmt_agent_linux_rsp_url in workspace/oci_management_agent_vars.yml
+          (or inventory vars) before running this playbook.
+
+    - name: Copy Linux installer script
+      ansible.builtin.copy:
+        src: "{{ oci_mgmt_linux_installer_local }}"
+        dest: "{{ oci_mgmt_linux_installer_remote }}"
+        mode: "0755"
+
+    - name: Install OCI Management Agent on Linux
+      ansible.builtin.command:
+        argv:
+          - "{{ oci_mgmt_linux_installer_remote }}"
+          - "--management-agent-zip-url"
+          - "{{ oci_mgmt_agent_linux_zip_url }}"
+          - "--response-file-url"
+          - "{{ oci_mgmt_agent_linux_rsp_url }}"
+          - "--install-key"
+          - "{{ oci_mgmt_agent_install_key_value }}"
+          - "--wallet-password"
+          - "{{ oci_mgmt_agent_wallet_password }}"
+          - "--response-file-local-path"
+          - "{{ oci_mgmt_agent_linux_rsp_local_path }}"
+      register: linux_mgmt_agent_install
+      changed_when: "'already installed' not in (linux_mgmt_agent_install.stdout | lower)"

@@ -20,6 +20,42 @@ The purpose of this lab is to give pentesters a vulnerable Active directory envi
 ## Licenses
 This lab use free Windows VM only (180 days). After that delay enter a license on each server or rebuild all the lab (may be it's time for an update ;))
 
+## OCI Management Agent (Post-Provision)
+
+This repository includes an external workflow to install OCI Management Agent on both Windows and Linux VMs without changing the default deployment flow.
+
+1. Prepare variables (PAR URLs for agent packages and install key) and run:
+
+```bash
+./scripts/install_oci_management_agents.sh --instance <instance_id> \
+  --windows-zip-url "<windows_zip_url>" \
+  --linux-zip-url "<linux_package_url_zip_or_rpm>" \
+  --install-key-id "<ocid1.managementagentinstallkey...>"
+```
+
+2. You can also generate/update only the override vars file and run later:
+
+```bash
+./scripts/install_oci_management_agents.sh --prepare-only
+```
+
+The wrapper writes overrides to `workspace/oci_management_agent_vars.yml` and then calls:
+
+```bash
+python3 goad.py -t install -r oci_management_agent.yml [-i <instance_id>]
+```
+
+For already-provisioned projects where you want direct inventory mode:
+
+```bash
+./scripts/install_oci_management_agents.sh \
+  --inventory ad/GOAD/providers/oci/inventory \
+  --global-inventory globalsettings.ini \
+  --windows-zip-url "<windows_zip_url>" \
+  --linux-zip-url "<linux_package_url_zip_or_rpm>" \
+  --install-key-id "<ocid1.managementagentinstallkey...>"
+```
+
 ## Available labs
 
 - GOAD Lab family and extensions overview

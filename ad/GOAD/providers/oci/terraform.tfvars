@@ -1,0 +1,8 @@
+tenancy_ocid     = "ocid1.tenancy.oc1..aaaaaaaabjagjjiz3dclb62hlrfh4vsmpaupd4zhlfb7h7izcb6gyho6usda"
+user_ocid        = ""
+fingerprint      = ""
+private_key_path = ""
+region           = "eu-frankfurt-1"
+compartment_ocid = "ocid1.compartment.oc1..aaaaaaaaypqsyqn6t6lqmwijlt3tuxtpm4d6gv5mgmibulbvc2wt4uglmpzq"
+availability_domain = "SPfM:EU-FRANKFURT-1-AD-1"
+ssh_authorized_keys = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDBW/qSv/R+M7Igi4h1unpQmOhQLvOEQiBJ6OQPUA2dY999kRBZuJlIH0CLjHIPf8X0GkvJonhWpFhy6OrSSbcWjjyc6Kbx3y24k3GszixVLMN3tnYNLS8EJ+28NPJDhitXouvAvEAbgo89ZTAwdytBtgiD3BqZi6qSlGlhTCsFlkoaAEzeSdsfE5vxeG+kDBnIrAYp/Oa5r3jjRHOfZaMufun9TEM4E3Ob7SM/HeW5UtESfbTEjySQVOBG7A/RCD7gIhGhhehQkQVJ1MiZ5KGka4uhuCo7qOJECt5Qn5DK5hxGLUL+JKVKgguTDGiClIXe2JdJIobAomguJaM7tlr9 alexandru_@419d0b8d7292"
