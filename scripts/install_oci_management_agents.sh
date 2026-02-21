@@ -137,6 +137,10 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+if [[ -z "$OCI_PROFILE" && -n "${OCI_CONFIG_PROFILE:-}" ]]; then
+  OCI_PROFILE="$OCI_CONFIG_PROFILE"
+fi
+
 if [[ "$SKIP_WINDOWS" == true && "$SKIP_LINUX" == true ]]; then
   echo "Both --skip-windows and --skip-linux are set; nothing to do." >&2
   exit 1
@@ -210,7 +214,16 @@ if [[ -n "$INSTALL_KEY_ID" ]]; then
     echo "oci CLI not found in PATH; cannot resolve --install-key-id." >&2
     exit 1
   fi
-  key_content="$(oci_cli management-agent install-key get-install-key-content --file - --management-agent-install-key-id "$INSTALL_KEY_ID")"
+  if ! key_content="$(oci_cli management-agent install-key get-install-key-content \
+      --file - \
+      --management-agent-install-key-id "$INSTALL_KEY_ID" 2>&1)"; then
+    echo "Failed to resolve Management Agent install key content for: $INSTALL_KEY_ID" >&2
+    echo "$key_content" >&2
+    if [[ "$key_content" == *NotAuthorizedOrNotFound* ]]; then
+      echo "Hint: verify --oci-profile and ensure the key OCID exists in that tenancy/region." >&2
+    fi
+    exit 1
+  fi
   extracted_key="$(printf '%s\n' "$key_content" \
     | grep -iE '^[[:space:]]*ManagementAgentInstallKey[[:space:]]*=' \
     | head -n1 \
@@ -251,16 +264,27 @@ if [[ "$PREPARE_ONLY" == true ]]; then
 fi
 
 if [[ -n "$INVENTORY_FILE" ]]; then
-  if ! command -v ansible-playbook >/dev/null 2>&1; then
-    echo "ansible-playbook not found in PATH." >&2
+  ansible_playbook_bin=""
+  if command -v ansible-playbook >/dev/null 2>&1; then
+    ansible_playbook_bin="$(command -v ansible-playbook)"
+  elif [[ -x "$HOME/.goad/.venv/bin/ansible-playbook" ]]; then
+    ansible_playbook_bin="$HOME/.goad/.venv/bin/ansible-playbook"
+  fi
+
+  if [[ -z "$ansible_playbook_bin" ]]; then
+    echo "ansible-playbook not found in PATH (or ~/.goad/.venv/bin)." >&2
     exit 1
+  fi
+
+  if [[ "${OSTYPE:-}" == darwin* ]]; then
+    export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
   fi
 
   if [[ -f "${PROJECT_ROOT}/ansible/ansible.cfg" ]]; then
     export ANSIBLE_CONFIG="${PROJECT_ROOT}/ansible/ansible.cfg"
   fi
 
-  CMD=(ansible-playbook -i "$INVENTORY_FILE")
+  CMD=("$ansible_playbook_bin" -i "$INVENTORY_FILE")
   if [[ -n "$GLOBAL_INVENTORY_FILE" && -f "$GLOBAL_INVENTORY_FILE" ]]; then
     CMD+=(-i "$GLOBAL_INVENTORY_FILE")
   fi
