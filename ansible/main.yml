@@ -1,10 +1,9 @@
 ---
-
 # Load datas
 - import_playbook: data.yml
   vars:
     data_path: "../ad/{{domain_name}}/data/"
-  tags: 'data'
+  tags: "data"
 
 # Prepare servers
 - import_playbook: build.yml
@@ -40,6 +39,8 @@
 - import_playbook: ad-relations.yml
 # set adcs
 - import_playbook: adcs.yml
+# set ADFS for SSO integrations
+- import_playbook: adfs.yml
 # set the ACL
 - import_playbook: ad-acl.yml
 

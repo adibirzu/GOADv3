@@ -1,0 +1,11 @@
+- name: Install ADFS feature
+  ansible.windows.win_feature:
+    name: ADFS-Federation
+    state: present
+    include_management_tools: yes
+  register: adfs_install
+
+- name: Reboot if required
+  ansible.windows.win_reboot:
+    msg: "Rebooting for ADFS installation"
+  when: adfs_install.reboot_required | bool

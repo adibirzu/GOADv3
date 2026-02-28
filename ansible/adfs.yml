@@ -1,0 +1,5 @@
+---
+- hosts: adcs
+  tasks:
+    - import_role:
+        name: adfs
